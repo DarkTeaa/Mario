@@ -46,6 +46,12 @@
             font-size: 14px;
             margin-left: 10px;
         }
+        .edit-test-btn {
+            background: #3498db;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
         .no-tests {
             text-align: center;
             font-size: 24px;
@@ -239,7 +245,8 @@
 
         <div id="admin-panel" style="display: none;">
             <button class="create-btn" onclick="showCreateForm()">Создать новый тест</button>
-            <button class="import-btn" onclick="document.getElementById('import-file-input').click()">Импортировать тесты из файла</button>
+            <button class="import-btn" onclick="refreshTestsFromGitHub()">Обновить тесты с GitHub</button>
+            <button class="import-btn" onclick="document.getElementById('import-file-input').click()" style="background: #95a5a6;">Импорт (для разработки)</button>
             <button class="logout-btn" onclick="logout()">Выйти</button>
             <hr style="margin: 20px 0;">
         </div>
@@ -266,7 +273,7 @@
 
         <!-- Форма создания теста -->
         <div id="create-form" style="display: none; margin-top: 30px;">
-            <h2>Создание нового теста</h2>
+            <h2 id="create-form-title">Создание нового теста</h2>
             <input type="text" id="test-title" placeholder="Название теста">
 
             <div id="questions-container"></div>
@@ -301,31 +308,48 @@
         const ADMIN_PASS = 'test123';
         let isLoggedIn = false;
         let testToDeleteIndex = null;
+        let testToEditIndex = null; // Индекс редактируемого теста (null = создание нового)
         let tests = []; // Глобальный массив тестов
-        let isImporting = false; // Флаг для определения импорта
+        
+        // URL для загрузки tests.json с GitHub
+        // Для GitHub Pages файл tests.json должен находиться в той же папке, что и index.html
+        function getTestsJsonUrl() {
+            // Используем относительный путь - работает, если tests.json в той же папке или в корне
+            return 'tests.json';
+        }
 
-        // Загрузка тестов из файла tests.json при старте
+        // Загрузка тестов из файла tests.json с GitHub при старте
         async function loadTestsFromFile() {
             try {
-                const response = await fetch('tests.json');
+                const url = getTestsJsonUrl();
+                console.log('Загрузка тестов из:', url);
+                
+                const response = await fetch(url, {
+                    cache: 'no-cache', // Обходим кеш, чтобы всегда получать актуальную версию
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                
                 if (response.ok) {
                     const loadedTests = await response.json();
-                    // Загружаем только если это не импорт и тесты из файла не загружены ранее
-                    if (!isImporting && Array.isArray(loadedTests)) {
+                    if (Array.isArray(loadedTests)) {
                         tests = loadedTests;
-                        console.log('Тесты загружены из tests.json:', tests.length);
+                        console.log('Тесты успешно загружены из GitHub:', tests.length);
+                    } else {
+                        console.warn('Неверный формат файла tests.json');
                     }
                 } else {
-                    console.warn('Файл tests.json не найден или недоступен');
+                    console.warn('Файл tests.json не найден по адресу:', url);
                 }
             } catch (err) {
-                console.warn('Не удалось загрузить tests.json:', err.message);
+                console.error('Ошибка загрузки tests.json с GitHub:', err.message);
             } finally {
                 loadTests(); // Отображаем тесты на странице
             }
         }
 
-        // Импорт тестов из выбранного файла
+        // Импорт тестов из выбранного файла (для локальной разработки)
         function importTestsFromFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -338,17 +362,14 @@
                 try {
                     const importedTests = JSON.parse(e.target.result);
                     if (Array.isArray(importedTests)) {
-                        isImporting = true;
-                        
                         // ВАЖНО: Очищаем текущие тесты и заменяем их импортированными
                         tests = importedTests;
                         loadTests();
                         
                         // Скачиваем обновленный файл
                         saveTestsToFile();
-                        isImporting = false;
                         
-                        alert(`Импортировано ${tests.length} тестов из файла!`);
+                        alert(`Импортировано ${tests.length} тестов из файла! Файл будет скачан для загрузки на GitHub.`);
                     } else {
                         alert('Неверный формат файла. Должен быть массив тестов.');
                     }
@@ -357,6 +378,12 @@
                 }
             };
             reader.readAsText(file);
+        }
+
+        // Функция для обновления тестов с GitHub (кнопка обновления)
+        async function refreshTestsFromGitHub() {
+            await loadTestsFromFile();
+            alert('Тесты обновлены с GitHub!');
         }
 
         // Сохранение тестов в файл tests.json (скачивание)
@@ -379,11 +406,12 @@
             console.log('Тесты сохранены в файл tests.json');
         }
 
-        // При загрузке страницы
+        // При загрузке страницы - автоматически загружаем тесты с GitHub
         document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('isAdminLoggedIn') === 'true') {
                 loginSuccess();
             }
+            // Автоматически загружаем тесты с GitHub при загрузке страницы
             loadTestsFromFile();
         });
 
@@ -594,7 +622,9 @@
         }
 
         function showCreateForm() {
+            testToEditIndex = null;
             document.getElementById('create-form').style.display = 'block';
+            document.getElementById('create-form-title').textContent = 'Создание нового теста';
             document.getElementById('test-list').style.display = 'none';
             document.getElementById('no-tests-msg').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'none';
@@ -602,6 +632,7 @@
             const container = document.getElementById('questions-container');
             container.innerHTML = '';
             container.appendChild(createQuestionBlock(0));
+            document.getElementById('test-title').value = '';
         }
 
         function addQuestion() {
@@ -667,13 +698,18 @@
 
             if (questions.length === 0) return alert('Добавьте хотя бы один вопрос!');
 
-            tests.push({ title, questions });
+            if (testToEditIndex !== null) {
+                // Редактирование существующего теста
+                tests[testToEditIndex] = { title, questions };
+                alert('Тест успешно отредактирован и сохранен!');
+            } else {
+                // Создание нового теста
+                tests.push({ title, questions });
+                alert('Тест успешно создан и сохранен!');
+            }
 
             saveTestsToFile();
-
             hideCreateForm();
-            
-            alert('Тест успешно создан и сохранен!');
         }
 
         function loadTests() {
@@ -700,6 +736,7 @@
                 `;
                 
                 if (isLoggedIn) {
+                    cardContent += `<button class="edit-test-btn" onclick="editTest(${index})">Редактировать тест</button>`;
                     cardContent += `<button class="delete-test-btn" onclick="showDeleteConfirm(${index})">Удалить тест</button>`;
                 }
                 
@@ -729,6 +766,67 @@
                 loadTests();
             }
             cancelDeleteTest();
+        }
+
+        function editTest(index) {
+            if (index < 0 || index >= tests.length) {
+                alert('Тест не найден!');
+                return;
+            }
+            
+            testToEditIndex = index;
+            const test = tests[index];
+            
+            document.getElementById('create-form').style.display = 'block';
+            document.getElementById('create-form-title').textContent = 'Редактирование теста';
+            document.getElementById('test-list').style.display = 'none';
+            document.getElementById('no-tests-msg').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            
+            document.getElementById('test-title').value = test.title;
+            
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            test.questions.forEach((question, qIndex) => {
+                const block = createQuestionBlock(qIndex);
+                block.querySelector('.question-text').value = question.text;
+                block.querySelector('.correct-answer').value = question.correct;
+                
+                const answersContainer = block.querySelector('.answers-container');
+                answersContainer.innerHTML = '';
+                
+                question.answers.forEach((answer, aIndex) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer-item';
+                    answerDiv.dataset.index = aIndex;
+                    
+                    // Экранируем текст для безопасности
+                    const escapedText = (answer.text || '').replace(/"/g, '&quot;');
+                    const imageSrc = answer.image ? answer.image.replace(/"/g, '&quot;') : '';
+                    
+                    answerDiv.innerHTML = `
+                        <input type="text" class="answer-text" placeholder="Текст варианта ответа" value="${escapedText}">
+                        <button class="remove-answer" onclick="removeAnswer(this)" type="button">Удалить</button>
+                        <div class="file-input-wrapper">
+                            <input type="file" class="answer-image-file" accept="image/*">
+                            <img class="preview" style="display:${answer.image ? 'block' : 'none'};" src="${imageSrc}">
+                            <button class="remove-img" style="display:${answer.image ? 'inline-block' : 'none'};" onclick="removeImage(this)" type="button">Удалить изображение</button>
+                        </div>
+                    `;
+                    
+                    const input = answerDiv.querySelector('.answer-image-file');
+                    input.addEventListener('change', function() {
+                        handleImageUpload(this);
+                    });
+                    
+                    answersContainer.appendChild(answerDiv);
+                });
+                
+                updateCorrectAnswerSelect(block);
+                updateRemoveAnswerButtons(answersContainer);
+                container.appendChild(block);
+            });
         }
 
         let currentTest = null;
@@ -764,10 +862,10 @@
             let optionsHTML = '';
             q.answers.forEach((ans, i) => {
                 const imgHTML = ans.image ? `<img src="${ans.image}" alt="Изображение">` : '';
-                const isChecked = showResultsMode && userAnswers[currentQuestionIndex] === i;
+                const isChecked = (showResultsMode && userAnswers[currentQuestionIndex] === i) || (!showResultsMode && userAnswers[currentQuestionIndex] === i);
                 optionsHTML += `
                     <label id="answer-label-${i}" class="answer-label">
-                        <input type="radio" name="answer" value="${i}" ${isChecked ? 'checked' : ''} ${showResultsMode ? 'disabled' : ''}>
+                        <input type="radio" name="answer" value="${i}" ${isChecked ? 'checked' : ''} ${showResultsMode ? 'disabled' : ''} onchange="handleAnswerSelection(${q.correct}, ${i})">
                         <strong>${ans.text}</strong>
                         ${imgHTML}
                     </label>`;
@@ -782,12 +880,24 @@
                 </div>
                 <div style="text-align: center; margin-top: 30px;">
                     <button onclick="nextQuestion()" id="next-btn">${currentQuestionIndex < total - 1 ? 'Далее' : 'Завершить тест'}</button>
+                    <button onclick="finishTestEarly()" style="background: #f39c12; margin-left: 10px;">Завершить досрочно</button>
                     <button onclick="backToMainFromQuiz()" style="background: #95a5a6; margin-left: 10px;">На главную</button>
                 </div>
             `;
 
+            // Добавляем обработчик для подсветки после рендеринга
             if (showResultsMode && userAnswers[currentQuestionIndex] !== undefined) {
-                highlightAnswers(q.correct, userAnswers[currentQuestionIndex]);
+                setTimeout(() => highlightAnswers(q.correct, userAnswers[currentQuestionIndex]), 0);
+            } else if (!showResultsMode && userAnswers[currentQuestionIndex] !== undefined) {
+                // Подсвечиваем ответы сразу после выбора
+                setTimeout(() => highlightAnswers(q.correct, userAnswers[currentQuestionIndex]), 0);
+            }
+        }
+
+        function handleAnswerSelection(correctIndex, selectedIndex) {
+            if (!showResultsMode) {
+                userAnswers[currentQuestionIndex] = selectedIndex;
+                highlightAnswers(correctIndex, selectedIndex);
             }
         }
 
@@ -802,7 +912,7 @@
                 correctLabel.classList.add('correct-answer', 'show-correct');
             }
 
-            if (userIndex !== correctIndex) {
+            if (userIndex !== correctIndex && userIndex !== -1) {
                 const userLabel = document.getElementById(`answer-label-${userIndex}`);
                 if (userLabel) {
                     userLabel.classList.add('wrong-answer');
@@ -814,9 +924,10 @@
             const selected = document.querySelector('input[name="answer"]:checked');
             
             if (!showResultsMode) {
-                if (!selected) return alert('Выберите ответ!');
-                
-                userAnswers.push(parseInt(selected.value));
+                if (userAnswers[currentQuestionIndex] === undefined) {
+                    if (!selected) return alert('Выберите ответ!');
+                    userAnswers[currentQuestionIndex] = parseInt(selected.value);
+                }
             }
 
             if (currentQuestionIndex < currentTest.questions.length - 1) {
@@ -829,10 +940,22 @@
             }
         }
 
+        function finishTestEarly() {
+            if (confirm('Вы уверены, что хотите завершить тест досрочно? Неотвеченные вопросы будут засчитаны как неправильные.')) {
+                showResults();
+            }
+        }
+
         function showResults() {
             let score = 0;
+            // Заполняем пустые ответы значением -1 (не отвечено)
+            for (let i = 0; i < currentTest.questions.length; i++) {
+                if (userAnswers[i] === undefined) {
+                    userAnswers[i] = -1; // -1 означает, что вопрос не был отвечен
+                }
+            }
             currentTest.questions.forEach((q, i) => {
-                if (userAnswers[i] === q.correct) score++;
+                if (userAnswers[i] !== -1 && userAnswers[i] === q.correct) score++;
             });
 
             document.getElementById('quiz-section').innerHTML = `

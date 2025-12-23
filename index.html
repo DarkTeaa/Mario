@@ -232,6 +232,257 @@
             padding: 5px;
             font-size: 14px;
         }
+        
+        /* Адаптивные стили для мобильных устройств */
+        @media (max-width: 768px) {
+            body {
+                margin: 20px auto;
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                width: 100%;
+                margin-bottom: 0;
+            }
+            
+            #auth-buttons {
+                width: 100%;
+            }
+            
+            #auth-buttons button {
+                width: 100%;
+            }
+            
+            button {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .create-btn, .import-btn, .logout-btn, .login-btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            #admin-panel {
+                width: 100%;
+            }
+            
+            #admin-panel > button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .test-card {
+                padding: 15px;
+            }
+            
+            .test-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .test-actions button {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            
+            .delete-test-btn, .edit-test-btn {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            
+            .quiz-options label {
+                padding: 12px;
+                margin: 10px 0;
+            }
+            
+            .quiz-options img {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .answer-item img.preview {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .question-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .question-title {
+                font-size: 16px;
+            }
+            
+            .remove-answer {
+                position: static;
+                margin-top: 10px;
+                display: block;
+            }
+            
+            .answer-controls {
+                flex-direction: column;
+            }
+            
+            .delete-confirm {
+                width: 90%;
+                max-width: 400px;
+                padding: 20px;
+                left: 50%;
+                top: 50%;
+            }
+            
+            .delete-confirm-buttons {
+                flex-direction: column;
+            }
+            
+            .delete-confirm-buttons button {
+                width: 100%;
+            }
+            
+            .result {
+                font-size: 18px;
+                margin: 20px 0;
+            }
+            
+            #login-modal {
+                padding: 10px;
+            }
+            
+            #login-modal > div {
+                width: 90%;
+                max-width: 350px;
+                padding: 20px;
+            }
+            
+            #login-modal button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            input[type="text"], input[type="file"] {
+                font-size: 16px; /* Предотвращает зум на iOS */
+            }
+            
+            .quiz-question {
+                margin-bottom: 30px;
+            }
+            
+            #quiz-section > div {
+                text-align: center;
+            }
+            
+            #quiz-section button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            /* Стили для формы создания теста */
+            #create-form > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #create-form > div:last-child button {
+                width: 100%;
+                margin: 0;
+            }
+            
+            .add-answer-btn {
+                width: 100%;
+            }
+            
+            .remove-question {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                margin: 10px auto;
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            h2 {
+                font-size: 18px;
+            }
+            
+            .no-tests {
+                font-size: 18px;
+                margin: 40px 0;
+            }
+            
+            .test-card {
+                padding: 12px;
+            }
+            
+            .test-card h3 {
+                font-size: 18px;
+            }
+            
+            button {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .quiz-options label {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .result {
+                font-size: 16px;
+            }
+            
+            .question-title {
+                font-size: 14px;
+            }
+            
+            .answer-item {
+                padding: 12px;
+            }
+            
+            .delete-confirm {
+                padding: 15px;
+            }
+            
+            #create-form > div:last-child {
+                gap: 8px;
+            }
+            
+            #create-form > div:last-child button {
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>

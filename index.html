@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Платформа тестов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h2 { text-align: center; color: #2c3e50; }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #2980b9; }
+        .login-btn { background: #9b59b6; }
+        .logout-btn { background: #e74c3c; }
+        .create-btn { background: #27ae60; margin-bottom: 20px; }
+        .import-btn { background: #f39c12; margin-bottom: 20px; }
+        .convert-btn { background: #8e44ad; margin-bottom: 20px; }
+        .delete-test-btn { 
+            background: #e74c3c; 
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .edit-test-btn {
+            background: #3498db;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .export-test-btn {
+            background: #16a085;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .no-tests {
+            text-align: center;
+            font-size: 24px;
+            color: #7f8c8d;
+            margin: 80px 0;
+        }
+        .test-list { margin-top: 20px; }
+        .test-card {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .test-card h3 { margin: 0 0 10px 0; }
+        .test-card p { margin: 5px 0; }
+        .start-test {
+            background: #3498db;
+            padding: 8px 16px;
+        }
+        .test-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .answer-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+            position: relative;
+        }
+        .answer-item img.preview {
+            max-width: 300px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: block;
+        }
+        .remove-img {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .remove-answer {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+        .remove-question {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .quiz-question { margin-bottom: 40px; }
+        .quiz-options label {
+            display: block;
+            margin: 15px 0;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            border: 2px solid transparent;
+        }
+        .quiz-options label:hover { background: #d6dbdf; }
+        .quiz-options input[type="radio"] { margin-right: 10px; }
+        .quiz-options img {
+            max-width: 300px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+            display: block;
+        }
+        .result { text-align: center; font-size: 24px; margin: 40px 0; }
+        
+        /* Стили для подсветки ответов */
+        .correct-answer {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+            border: 2px solid #28a745 !important;
+        }
+        .wrong-answer {
+            background-color: #f8d7da !important;
+            border-color: #f5c6cb !important;
+            border: 2px solid #dc3545 !important;
+        }
+        .show-correct {
+            animation: pulse 1.5s;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Стиль для кнопок управления ответами */
+        .answer-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .add-answer-btn {
+            background: #27ae60;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .question-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        /* Стиль для сообщения об удалении */
+        .delete-confirm {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .delete-confirm h3 {
+            margin-top: 0;
+            color: #e74c3c;
+        }
+        .delete-confirm-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .confirm-delete-btn {
+            background: #e74c3c;
+        }
+        .cancel-delete-btn {
+            background: #95a5a6;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        /* Стили для полей файлов */
+        .file-input-wrapper {
+            margin-top: 10px;
+        }
+        .file-input-wrapper input[type="file"] {
+            padding: 5px;
+            font-size: 14px;
+        }
+        
+        /* Новые стили для режима работы над ошибками */
+        .error-review-title {
+            text-align: center;
+            color: #e74c3c;
+            font-size: 22px;
+            margin-bottom: 30px;
+        }
+        .error-question {
+            background: #fdf2f2;
+            border-left: 5px solid #e74c3c;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        /* Стили для заблокированных радио-кнопок */
+        .quiz-options input[type="radio"]:disabled {
+            cursor: not-allowed;
+        }
+        
+        /* Адаптивные стили для мобильных устройств */
+        @media (max-width: 768px) {
+            body {
+                margin: 20px auto;
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                width: 100%;
+                margin-bottom: 0;
+            }
+            
+            #auth-buttons {
+                width: 100%;
+            }
+            
+            #auth-buttons button {
+                width: 100%;
+            }
+            
+            button {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .create-btn, .import-btn, .convert-btn, .logout-btn, .login-btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            #admin-panel {
+                width: 100%;
+            }
+            
+            #admin-panel > button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .test-card {
+                padding: 15px;
+            }
+            
+            .test-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .test-actions button {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            
+            .delete-test-btn, .edit-test-btn, .export-test-btn {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            
+            .quiz-options label {
+                padding: 12px;
+                margin: 10px 0;
+            }
+            
+            .quiz-options img {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .answer-item img.preview {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .question-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .question-title {
+                font-size: 16px;
+            }
+            
+            .remove-answer {
+                position: static;
+                margin-top: 10px;
+                display: block;
+            }
+            
+            .answer-controls {
+                flex-direction: column;
+            }
+            
+            .delete-confirm {
+                width: 90%;
+                max-width: 400px;
+                padding: 20px;
+                left: 50%;
+                top: 50%;
+            }
+            
+            .delete-confirm-buttons {
+                flex-direction: column;
+            }
+            
+            .delete-confirm-buttons button {
+                width: 100%;
+            }
+            
+            .result {
+                font-size: 18px;
+                margin: 20px 0;
+            }
+            
+            #login-modal {
+                padding: 10px;
+            }
+            
+            #login-modal > div {
+                width: 90%;
+                max-width: 350px;
+                padding: 20px;
+            }
+            
+            #login-modal button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            input[type="text"], input[type="file"] {
+                font-size: 16px; /* Предотвращает зум на iOS */
+            }
+            
+            .quiz-question {
+                margin-bottom: 30px;
+            }
+            
+            #quiz-section > div {
+                text-align: center;
+            }
+            
+            #quiz-section button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            /* Стили для формы создания теста */
+            #create-form > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #create-form > div:last-child button {
+                width: 100%;
+                margin: 0;
+            }
+            
+            .add-answer-btn {
+                width: 100%;
+            }
+            
+            .remove-question {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                margin: 10px auto;
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            h2 {
+                font-size: 18px;
+            }
+            
+            .no-tests {
+                font-size: 18px;
+                margin: 40px 0;
+            }
+            
+            .test-card {
+                padding: 12px;
+            }
+            
+            .test-card h3 {
+                font-size: 18px;
+            }
+            
+            button {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .quiz-options label {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .result {
+                font-size: 16px;
+            }
+            
+            .question-title {
+                font-size: 14px;
+            }
+            
+            .answer-item {
+                padding: 12px;
+            }
+            
+            .delete-confirm {
+                padding: 15px;
+            }
+            
+            #create-form > div:last-child {
+                gap: 8px;
+            }
+            
+            #create-form > div:last-child button {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Платформа тестов</h1>
+            <div id="auth-buttons">
+                <button class="login-btn" onclick="showLogin()">Войти (для создания тестов)</button>
+            </div>
+        </div>
+
+        <div id="admin-panel" style="display: none;">
+            <button class="create-btn" onclick="showCreateForm()">Создать новый тест</button>
+            <button class="import-btn" onclick="refreshTestsFromGitHub()">Обновить тесты с GitHub</button>
+            <button class="import-btn" onclick="document.getElementById('import-file-input').click()" style="background: #95a5a6;">Импорт (для разработки)</button>
+            <button class="convert-btn" onclick="document.getElementById('convert-file-input').click()">Конвертировать чужой JSON в мой формат</button>
+            <button class="logout-btn" onclick="logout()">Выйти</button>
+            <hr style="margin: 20px 0;">
+        </div>
+
+        <div class="no-tests" id="no-tests-msg">Скоро здесь появятся тесты</div>
+
+        <div id="test-list" class="test-list"></div>
+
+        <!-- Скрытые input'ы для импорта и конвертации -->
+        <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importTestsFromFile(event)">
+        <input type="file" id="convert-file-input" accept=".json" style="display: none;" onchange="convertForeignJson(event)">
+
+        <!-- Модальное окно входа -->
+        <div id="login-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100;">
+            <div style="background: white; padding: 30px; border-radius: 10px; width: 300px;">
+                <h2>Вход для администратора</h2>
+                <input type="text" id="username" placeholder="Логин"><br><br>
+                <input type="password" id="password" placeholder="Пароль"><br><br>
+                <button onclick="login()">Войти</button>
+                <button onclick="hideLogin()" style="background: #95a5a6;">Отмена</button>
+                <p id="login-error" style="color: red; display: none;">Неверный логин или пароль</p>
+            </div>
+        </div>
+
+        <!-- Форма создания теста -->
+        <div id="create-form" style="display: none; margin-top: 30px;">
+            <h2 id="create-form-title">Создание нового теста</h2>
+            <input type="text" id="test-title" placeholder="Название теста">
+
+            <div id="questions-container"></div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="addQuestion()">+ Добавить вопрос</button>
+                <button onclick="saveTest()">Сохранить тест</button>
+                <button onclick="cancelCreate()" style="background: #95a5a6;">Отмена</button>
+            </div>
+        </div>
+
+        <!-- Прохождение теста -->
+        <div id="quiz-section" style="display: none; margin-top: 30px;"></div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="delete-confirm-modal" style="display: none;">
+        <div class="overlay"></div>
+        <div class="delete-confirm">
+            <h3>Подтверждение удаления</h3>
+            <p>Вы уверены, что хотите удалить этот тест?</p>
+            <p id="test-to-delete-name" style="font-weight: bold; color: #2c3e50;"></p>
+            <div class="delete-confirm-buttons">
+                <button class="confirm-delete-btn" onclick="confirmDeleteTest()">Да, удалить</button>
+                <button class="cancel-delete-btn" onclick="cancelDeleteTest()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_LOGIN = 'admin';
+        const ADMIN_PASS = 'test123';
+        let isLoggedIn = false;
+        let testToDeleteIndex = null;
+        let testToEditIndex = null;
+        let tests = [];
+
+        // Новые переменные для работы над ошибками
+        let errorQuestions = []; // Массив индексов вопросов с ошибками
+        let currentErrorIndex = 0; // Текущий вопрос в режиме ошибок
+        let errorReviewAnswers = []; // Ответы пользователя в режиме работы над ошибками
+        let isErrorReviewMode = false; // Флаг режима работы над ошибками
+
+        function getTestsJsonUrl() {
+            return 'tests.json';
+        }
+
+        async function loadTestsFromFile() {
+            try {
+                const url = getTestsJsonUrl();
+                console.log('Загрузка тестов из:', url);
+                
+                const response = await fetch(url, { cache: 'no-cache' });
+                
+                if (response.ok) {
+                    const loadedTests = await response.json();
+                    if (Array.isArray(loadedTests)) {
+                        tests = loadedTests;
+                        console.log('Тесты успешно загружены из GitHub:', tests.length);
+                    }
+                }
+            } catch (err) {
+                console.error('Ошибка загрузки tests.json:', err.message);
+            } finally {
+                loadTests();
+            }
+        }
+
+        function importTestsFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            event.target.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedTests = JSON.parse(e.target.result);
+                    if (Array.isArray(importedTests)) {
+                        tests = importedTests;
+                        loadTests();
+                        saveTestsToFile();
+                        alert(`Импортировано ${tests.length} тестов из файла! Файл скачан для загрузки на GitHub.`);
+                    } else {
+                        alert('Неверный формат файла. Должен быть массив тестов.');
+                    }
+                } catch (err) {
+                    alert('Ошибка чтения файла. Убедитесь, что это валидный JSON.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function convertForeignJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            event.target.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let convertedTests = [];
+
+                    if (Array.isArray(data)) {
+                        data.forEach(test => {
+                            const converted = convertSingleTest(test);
+                            if (converted) convertedTests.push(converted);
+                        });
+                    } else {
+                        const converted = convertSingleTest(data);
+                        if (converted) convertedTests.push(converted);
+                    }
+
+                    if (convertedTests.length === 0) {
+                        alert('Не удалось распознать формат JSON. Поддерживаются популярные форматы тестов.');
+                        return;
+                    }
+
+                    tests.push(...convertedTests);
+                    loadTests();
+                    saveTestsToFile();
+
+                    alert(`Успешно сконвертировано и добавлено ${convertedTests.length} тест(ов)! Файл tests.json скачан с обновлениями.`);
+                } catch (err) {
+                    console.error(err);
+                    alert('Ошибка чтения или парсинга JSON файла.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function convertSingleTest(raw) {
+            let title = raw.title || raw.name || raw.testName || "Без названия";
+            let questions = [];
+
+            const rawQuestions = raw.questions || raw.items || raw.quiz || raw.data;
+
+            if (!Array.isArray(rawQuestions)) return null;
+
+            rawQuestions.forEach(q => {
+                let questionText = q.question || q.text || q.q || "";
+                if (!questionText) return;
+
+                let answers = [];
+                let correctIndex = -1;
+
+                const options = q.options || q.answers || q.variants || q.choices || q.answerOptions;
+
+                if (Array.isArray(options)) {
+                    options.forEach((opt, i) => {
+                        let text = typeof opt === 'string' ? opt : (opt.text || opt.answer || opt.option || "");
+                        if (text) {
+                            answers.push({ text, image: null });
+
+                            if (opt.correct || opt.isCorrect || q.correct === i || q.correctAnswer === i ||
+                                q.answer === i || q.right === i || q.correctIndex === i) {
+                                correctIndex = answers.length - 1;
+                            }
+                            if (typeof q.correct === 'string' && q.correct === text) {
+                                correctIndex = answers.length - 1;
+                            }
+                        }
+                    });
+                }
+
+                if (correctIndex === -1 && q.correctAnswer && typeof q.correctAnswer === 'string') {
+                    const idx = answers.findIndex(a => a.text === q.correctAnswer);
+                    if (idx !== -1) correctIndex = idx;
+                }
+
+                if (correctIndex === -1) {
+                    if (typeof q.correct === 'number') correctIndex = q.correct;
+                    if (typeof q.answer === 'number') correctIndex = q.answer;
+                    if (typeof q.right === 'number') correctIndex = q.right;
+                }
+
+                if (answers.length >= 2 && correctIndex >= 0) {
+                    questions.push({
+                        text: questionText,
+                        answers: answers,
+                        correct: correctIndex
+                    });
+                }
+            });
+
+            if (questions.length > 0) {
+                return { title, questions };
+            }
+            return null;
+        }
+
+        async function refreshTestsFromGitHub() {
+            await loadTestsFromFile();
+            alert('Тесты обновлены с GitHub!');
+        }
+
+        function saveTestsToFile() {
+            const dataStr = JSON.stringify(tests, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(dataBlob);
+            downloadLink.download = 'tests.json';
+            downloadLink.style.display = 'none';
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            setTimeout(() => URL.revokeObjectURL(downloadLink.href), 100);
+            console.log('Тесты сохранены в файл tests.json');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isAdminLoggedIn') === 'true') {
+                loginSuccess();
+            }
+            loadTestsFromFile();
+        });
+
+        function showLogin() {
+            document.getElementById('login-modal').style.display = 'flex';
+        }
+
+        function hideLogin() {
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        function login() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+
+            if (user === ADMIN_LOGIN && pass === ADMIN_PASS) {
+                loginSuccess();
+                hideLogin();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+
+        function loginSuccess() {
+            isLoggedIn = true;
+            localStorage.setItem('isAdminLoggedIn', 'true');
+            document.getElementById('auth-buttons').innerHTML = `<button class="logout-btn" onclick="logout()">Выйти</button>`;
+            document.getElementById('admin-panel').style.display = 'block';
+            loadTests();
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            localStorage.removeItem('isAdminLoggedIn');
+            document.getElementById('auth-buttons').innerHTML = `<button class="login-btn" onclick="showLogin()">Войти (для создания тестов)</button>`;
+            document.getElementById('admin-panel').style.display = 'none';
+            loadTests();
+        }
+
+        function createQuestionBlock(questionIndex = 0) {
+            const block = document.createElement('div');
+            block.className = 'question-block';
+            block.style = 'border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; background: #f8f9fa;';
+            block.dataset.index = questionIndex;
+
+            block.innerHTML = `
+                <div class="question-header">
+                    <div class="question-title">Вопрос ${questionIndex + 1}</div>
+                    <button class="remove-question" onclick="removeQuestion(this)" type="button">Удалить вопрос</button>
+                </div>
+                <input type="text" class="question-text" placeholder="Текст вопроса">
+
+                <div class="answers-container"></div>
+
+                <div class="answer-controls">
+                    <button class="add-answer-btn" onclick="addAnswer(this)" type="button">+ Добавить вариант ответа</button>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label><strong>Правильный ответ:</strong>
+                    <select class="correct-answer">
+                        <option value="0">Вариант 1</option>
+                    </select>
+                    </label>
+                </div>
+            `;
+
+            const answersContainer = block.querySelector('.answers-container');
+            
+            for (let i = 0; i < 4; i++) {
+                addAnswerToContainer(answersContainer, i);
+            }
+
+            updateCorrectAnswerSelect(block);
+
+            return block;
+        }
+
+        function addAnswerToContainer(container, answerIndex) {
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'answer-item';
+            answerDiv.dataset.index = answerIndex;
+            
+            answerDiv.innerHTML = `
+                <input type="text" class="answer-text" placeholder="Текст варианта ответа">
+                <button class="remove-answer" onclick="removeAnswer(this)" type="button">Удалить</button>
+                <div class="file-input-wrapper">
+                    <input type="file" class="answer-image-file" accept="image/*">
+                    <img class="preview" style="display:none;">
+                    <button class="remove-img" style="display:none;" onclick="removeImage(this)" type="button">Удалить изображение</button>
+                </div>
+            `;
+
+            const input = answerDiv.querySelector('.answer-image-file');
+            input.addEventListener('change', function() {
+                handleImageUpload(this);
+            });
+
+            container.appendChild(answerDiv);
+            
+            updateRemoveAnswerButtons(container);
+        }
+
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            const preview = input.parentElement.querySelector('.preview');
+            const removeBtn = input.parentElement.querySelector('.remove-img');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    removeBtn.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage(btn) {
+            const item = btn.parentElement;
+            const input = item.querySelector('.answer-image-file');
+            const preview = item.querySelector('.preview');
+            const removeBtn = btn;
+
+            input.value = '';
+            preview.src = '';
+            preview.style.display = 'none';
+            removeBtn.style.display = 'none';
+        }
+
+        function addAnswer(btn) {
+            const container = btn.closest('.question-block').querySelector('.answers-container');
+            const answerIndex = container.children.length;
+            addAnswerToContainer(container, answerIndex);
+            updateCorrectAnswerSelect(btn.closest('.question-block'));
+            updateRemoveAnswerButtons(container);
+        }
+
+        function removeAnswer(btn) {
+            const answerItem = btn.closest('.answer-item');
+            const container = answerItem.parentElement;
+            
+            if (container.children.length > 2) {
+                container.removeChild(answerItem);
+                
+                Array.from(container.children).forEach((item, index) => {
+                    item.dataset.index = index;
+                });
+                
+                updateCorrectAnswerSelect(btn.closest('.question-block'));
+                updateRemoveAnswerButtons(container);
+            }
+        }
+
+        function updateRemoveAnswerButtons(container) {
+            const removeButtons = container.querySelectorAll('.remove-answer');
+            const shouldDisable = container.children.length <= 2;
+            
+            removeButtons.forEach(btn => {
+                btn.disabled = shouldDisable;
+                btn.style.opacity = shouldDisable ? '0.5' : '1';
+                btn.style.cursor = shouldDisable ? 'not-allowed' : 'pointer';
+            });
+        }
+
+        function removeQuestion(btn) {
+            const questionBlock = btn.closest('.question-block');
+            const container = document.getElementById('questions-container');
+            
+            if (container.children.length > 1) {
+                container.removeChild(questionBlock);
+                
+                Array.from(container.children).forEach((block, index) => {
+                    block.dataset.index = index;
+                    block.querySelector('.question-title').textContent = `Вопрос ${index + 1}`;
+                });
+            } else {
+                alert('Должен остаться хотя бы один вопрос!');
+            }
+        }
+
+        function updateCorrectAnswerSelect(questionBlock) {
+            const select = questionBlock.querySelector('.correct-answer');
+            const container = questionBlock.querySelector('.answers-container');
+            const currentValue = select.value;
+            
+            select.innerHTML = '';
+            
+            Array.from(container.children).forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Вариант ${index + 1}`;
+                select.appendChild(option);
+            });
+            
+            if (currentValue < container.children.length) {
+                select.value = currentValue;
+            } else {
+                select.value = container.children.length - 1;
+            }
+        }
+
+        function showCreateForm() {
+            testToEditIndex = null;
+            document.getElementById('create-form').style.display = 'block';
+            document.getElementById('create-form-title').textContent = 'Создание нового теста';
+            document.getElementById('test-list').style.display = 'none';
+            document.getElementById('no-tests-msg').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            container.appendChild(createQuestionBlock(0));
+            document.getElementById('test-title').value = '';
+        }
+
+        function addQuestion() {
+            const container = document.getElementById('questions-container');
+            const questionIndex = container.children.length;
+            container.appendChild(createQuestionBlock(questionIndex));
+        }
+
+        function cancelCreate() {
+            hideCreateForm();
+            if (isLoggedIn) {
+                document.getElementById('admin-panel').style.display = 'block';
+            }
+        }
+
+        function hideCreateForm() {
+            document.getElementById('create-form').style.display = 'none';
+            document.getElementById('test-title').value = '';
+            document.getElementById('questions-container').innerHTML = '';
+            showMainPage();
+        }
+
+        function showMainPage() {
+            document.getElementById('test-list').style.display = 'block';
+            if (isLoggedIn) {
+                document.getElementById('admin-panel').style.display = 'block';
+            }
+            loadTests();
+        }
+
+        function saveTest() {
+            const title = document.getElementById('test-title').value.trim();
+            if (!title) return alert('Введите название теста!');
+
+            const questions = [];
+            const blocks = document.querySelectorAll('.question-block');
+
+            for (let block of blocks) {
+                const qText = block.querySelector('.question-text').value.trim();
+                if (!qText) return alert('Заполните текст всех вопросов!');
+
+                const answerItems = block.querySelectorAll('.answer-item');
+                const answers = [];
+
+                for (let item of answerItems) {
+                    const text = item.querySelector('.answer-text').value.trim();
+                    const preview = item.querySelector('.preview');
+
+                    if (text) {
+                        answers.push({
+                            text,
+                            image: preview.src && preview.style.display !== 'none' ? preview.src : null
+                        });
+                    }
+                }
+
+                if (answers.length < 2) return alert('У каждого вопроса должно быть минимум 2 варианта с текстом!');
+
+                const correct = parseInt(block.querySelector('.correct-answer').value);
+
+                questions.push({ text: qText, answers, correct });
+            }
+
+            if (questions.length === 0) return alert('Добавьте хотя бы один вопрос!');
+
+            if (testToEditIndex !== null) {
+                tests[testToEditIndex] = { title, questions };
+                alert('Тест успешно отредактирован и сохранен!');
+            } else {
+                tests.push({ title, questions });
+                alert('Тест успешно создан и сохранен!');
+            }
+
+            saveTestsToFile();
+            hideCreateForm();
+        }
+
+        function loadTests() {
+            const list = document.getElementById('test-list');
+            list.innerHTML = '';
+
+            if (tests.length === 0) {
+                document.getElementById('no-tests-msg').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('no-tests-msg').style.display = 'none';
+
+            tests.forEach((test, index) => {
+                const card = document.createElement('div');
+                card.className = 'test-card';
+                
+                let cardContent = `
+                    <h3>${test.title}</h3>
+                    <p>Вопросов: ${test.questions.length}</p>
+                    <div class="test-actions">
+                        <button class="start-test" onclick="startTest(${index})">Пройти тест</button>
+                `;
+                
+                if (isLoggedIn) {
+                    cardContent += `<button class="edit-test-btn" onclick="editTest(${index})">Редактировать тест</button>`;
+                    cardContent += `<button class="export-test-btn" onclick="exportTestToWord(${index})">Экспорт в Word</button>`;
+                    cardContent += `<button class="delete-test-btn" onclick="showDeleteConfirm(${index})">Удалить тест</button>`;
+                }
+                
+                cardContent += `</div>`;
+                card.innerHTML = cardContent;
+                list.appendChild(card);
+            });
+        }
+
+        function showDeleteConfirm(index) {
+            if (index >= 0 && index < tests.length) {
+                testToDeleteIndex = index;
+                document.getElementById('test-to-delete-name').textContent = tests[index].title;
+                document.getElementById('delete-confirm-modal').style.display = 'block';
+            }
+        }
+
+        function cancelDeleteTest() {
+            testToDeleteIndex = null;
+            document.getElementById('delete-confirm-modal').style.display = 'none';
+        }
+
+        function confirmDeleteTest() {
+            if (testToDeleteIndex !== null) {
+                tests.splice(testToDeleteIndex, 1);
+                saveTestsToFile();
+                loadTests();
+            }
+            cancelDeleteTest();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function exportTestToWord(index) {
+            if (index < 0 || index >= tests.length) {
+                alert('Тест не найден!');
+                return;
+            }
+
+            const test = tests[index];
+            
+            let htmlContent = `<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='UTF-8'>
+    <title>${escapeHtml(test.title)}</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 40px; }
+        h1 { font-size: 18pt; font-weight: bold; text-align: center; margin-bottom: 30px; color: #2c3e50; }
+        .question { margin-bottom: 25px; page-break-inside: avoid; }
+        .question-number { font-weight: bold; font-size: 14pt; margin-bottom: 10px; color: #2c3e50; }
+        .question-text { font-weight: bold; font-size: 12pt; margin-bottom: 15px; }
+        .answer { margin-bottom: 10px; padding: 8px; padding-left: 20px; border-left: 3px solid #ddd; }
+        .answer-correct { background-color: #d4edda; border-left-color: #28a745; font-weight: bold; color: #155724; }
+        .answer-label { font-weight: bold; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <h1>${escapeHtml(test.title)}</h1>`;
+
+            test.questions.forEach((question, qIndex) => {
+                htmlContent += `
+    <div class="question">
+        <div class="question-number">Вопрос ${qIndex + 1}</div>
+        <div class="question-text">${escapeHtml(question.text)}</div>`;
+                
+                question.answers.forEach((answer, aIndex) => {
+                    const isCorrect = aIndex === question.correct;
+                    const answerClass = isCorrect ? 'answer-correct' : 'answer';
+                    const answerLabel = String.fromCharCode(65 + aIndex);
+                    
+                    htmlContent += `
+        <div class="${answerClass}">
+            <span class="answer-label">${answerLabel}.</span>${escapeHtml(answer.text)}${isCorrect ? ' <strong>(ПРАВИЛЬНЫЙ ОТВЕТ)</strong>' : ''}
+        </div>`;
+                });
+                
+                htmlContent += `
+    </div>`;
+            });
+
+            htmlContent += `
+</body>
+</html>`;
+
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword;charset=utf-8' });
+            
+            const fileName = `${test.title.replace(/[^a-zа-яё0-9]/gi, '_')}.doc`;
+            const link = document.createElement('a');
+            
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, fileName);
+            } else {
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(link.href), 100);
+            }
+
+            alert(`Тест "${test.title}" успешно экспортирован в Word документ!`);
+        }
+
+        function editTest(index) {
+            if (index < 0 || index >= tests.length) {
+                alert('Тест не найден!');
+                return;
+            }
+            
+            testToEditIndex = index;
+            const test = tests[index];
+            
+            document.getElementById('create-form').style.display = 'block';
+            document.getElementById('create-form-title').textContent = 'Редактирование теста';
+            document.getElementById('test-list').style.display = 'none';
+            document.getElementById('no-tests-msg').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            
+            document.getElementById('test-title').value = test.title;
+            
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            test.questions.forEach((question, qIndex) => {
+                const block = createQuestionBlock(qIndex);
+                block.querySelector('.question-text').value = question.text;
+                block.querySelector('.correct-answer').value = question.correct;
+                
+                const answersContainer = block.querySelector('.answers-container');
+                answersContainer.innerHTML = '';
+                
+                question.answers.forEach((answer, aIndex) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer-item';
+                    answerDiv.dataset.index = aIndex;
+                    
+                    const escapedText = (answer.text || '').replace(/"/g, '&quot;');
+                    const imageSrc = answer.image ? answer.image.replace(/"/g, '&quot;') : '';
+                    
+                    answerDiv.innerHTML = `
+                        <input type="text" class="answer-text" placeholder="Текст варианта ответа" value="${escapedText}">
+                        <button class="remove-answer" onclick="removeAnswer(this)" type="button">Удалить</button>
+                        <div class="file-input-wrapper">
+                            <input type="file" class="answer-image-file" accept="image/*">
+                            <img class="preview" style="display:${answer.image ? 'block' : 'none'};" src="${imageSrc}">
+                            <button class="remove-img" style="display:${answer.image ? 'inline-block' : 'none'};" onclick="removeImage(this)" type="button">Удалить изображение</button>
+                        </div>
+                    `;
+                    
+                    const input = answerDiv.querySelector('.answer-image-file');
+                    input.addEventListener('change', function() {
+                        handleImageUpload(this);
+                    });
+                    
+                    answersContainer.appendChild(answerDiv);
+                });
+                
+                updateCorrectAnswerSelect(block);
+                updateRemoveAnswerButtons(answersContainer);
+                container.appendChild(block);
+            });
+        }
+
+        let currentTest = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let showResultsMode = false;
+
+        function startTest(index) {
+            if (index < 0 || index >= tests.length) {
+                alert('Тест не найден!');
+                return;
+            }
+            
+            currentTest = tests[index];
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            showResultsMode = false;
+            isErrorReviewMode = false;
+
+            document.getElementById('test-list').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('create-form').style.display = 'none';
+
+            renderQuestion();
+            document.getElementById('quiz-section').style.display = 'block';
+        }
+
+        function renderQuestion() {
+            if (!currentTest) return;
+            
+            const q = currentTest.questions[currentQuestionIndex];
+            const total = currentTest.questions.length;
+
+            let optionsHTML = '';
+            q.answers.forEach((ans, i) => {
+                const imgHTML = ans.image ? `<img src="${ans.image}" alt="Изображение">` : '';
+                const isChecked = userAnswers[currentQuestionIndex] === i;
+                const isDisabled = userAnswers[currentQuestionIndex] !== undefined && !isErrorReviewMode;
+                
+                optionsHTML += `
+                    <label id="answer-label-${i}" class="answer-label">
+                        <input type="radio" name="answer" value="${i}" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} onchange="handleAnswerSelection(${q.correct}, ${i})">
+                        <strong>${ans.text}</strong>
+                        ${imgHTML}
+                    </label>`;
+            });
+
+            document.getElementById('quiz-section').innerHTML = `
+                <h2>${currentTest.title}</h2>
+                <p><strong>Вопрос ${currentQuestionIndex + 1} из ${total}</strong></p>
+                <div class="quiz-question">
+                    <h3>${q.text}</h3>
+                    <div class="quiz-options">${optionsHTML}</div>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="nextQuestion()" id="next-btn">${currentQuestionIndex < total - 1 ? 'Далее' : 'Завершить тест'}</button>
+                    <button onclick="finishTestEarly()" style="background: #f39c12; margin-left: 10px;">Завершить досрочно</button>
+                    <button onclick="backToMainFromQuiz()" style="background: #95a5a6; margin-left: 10px;">На главную</button>
+                </div>
+            `;
+
+            if (userAnswers[currentQuestionIndex] !== undefined) {
+                highlightAnswers(q.correct, userAnswers[currentQuestionIndex]);
+            }
+        }
+
+        function handleAnswerSelection(correctIndex, selectedIndex) {
+            if (isErrorReviewMode) {
+                errorReviewAnswers[currentErrorIndex] = selectedIndex;
+                // В режиме работы над ошибками подсвечиваем ответы сразу
+                highlightAnswersInErrorReview(correctIndex, selectedIndex);
+                
+                // Блокируем радио-кнопки после выбора в режиме работы над ошибками
+                document.querySelectorAll('input[name="answer"]').forEach(radio => {
+                    radio.disabled = true;
+                });
+            } else {
+                userAnswers[currentQuestionIndex] = selectedIndex;
+                highlightAnswers(correctIndex, selectedIndex);
+                
+                // Блокируем все радио-кнопки после выбора
+                document.querySelectorAll('input[name="answer"]').forEach(radio => {
+                    radio.disabled = true;
+                });
+            }
+        }
+
+        function highlightAnswers(correctIndex, userIndex) {
+            const allLabels = document.querySelectorAll('.quiz-options .answer-label');
+            allLabels.forEach(label => {
+                label.classList.remove('correct-answer', 'wrong-answer', 'show-correct');
+            });
+
+            // Сначала подсвечиваем правильный ответ
+            const correctLabel = document.getElementById(`answer-label-${correctIndex}`);
+            if (correctLabel) {
+                correctLabel.classList.add('correct-answer', 'show-correct');
+            }
+
+            // Затем подсвечиваем неправильный ответ пользователя (если есть)
+            if (userIndex !== undefined && userIndex !== -1 && userIndex !== correctIndex) {
+                const userLabel = document.getElementById(`answer-label-${userIndex}`);
+                if (userLabel) {
+                    userLabel.classList.add('wrong-answer');
+                }
+            }
+        }
+
+        function highlightAnswersInErrorReview(correctIndex, userIndex) {
+            const allLabels = document.querySelectorAll('.quiz-options .answer-label');
+            allLabels.forEach(label => {
+                label.classList.remove('correct-answer', 'wrong-answer', 'show-correct');
+            });
+
+            // Подсвечиваем правильный ответ зеленым
+            const correctLabel = document.getElementById(`answer-label-${correctIndex}`);
+            if (correctLabel) {
+                correctLabel.classList.add('correct-answer', 'show-correct');
+            }
+
+            // Если пользователь выбрал неправильный ответ, подсвечиваем его красным
+            if (userIndex !== undefined && userIndex !== -1 && userIndex !== correctIndex) {
+                const userLabel = document.getElementById(`answer-label-${userIndex}`);
+                if (userLabel) {
+                    userLabel.classList.add('wrong-answer');
+                }
+            }
+        }
+
+        function nextQuestion() {
+            if (isErrorReviewMode) {
+                if (errorReviewAnswers[currentErrorIndex] === undefined) {
+                    return alert('Выберите ответ!');
+                }
+                
+                if (currentErrorIndex < errorQuestions.length - 1) {
+                    currentErrorIndex++;
+                    renderErrorQuestion();
+                } else {
+                    showErrorReviewResults();
+                }
+            } else {
+                if (userAnswers[currentQuestionIndex] === undefined) {
+                    return alert('Выберите ответ!');
+                }
+
+                if (currentQuestionIndex < currentTest.questions.length - 1) {
+                    currentQuestionIndex++;
+                    renderQuestion();
+                } else {
+                    showResults();
+                }
+            }
+        }
+
+        function finishTestEarly() {
+            if (confirm('Вы уверены, что хотите завершить тест досрочно? Неотвеченные вопросы будут засчитаны как неправильные.')) {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            let score = 0;
+            errorQuestions = []; // Сбрасываем ошибки
+
+            for (let i = 0; i < currentTest.questions.length; i++) {
+                if (userAnswers[i] === undefined) {
+                    userAnswers[i] = -1; // Помечаем как неотвеченный
+                }
+                
+                // Проверяем, правильный ли ответ (и был ли ответ дан)
+                if (userAnswers[i] !== -1 && userAnswers[i] === currentTest.questions[i].correct) {
+                    score++;
+                } else if (userAnswers[i] !== -1 && userAnswers[i] !== currentTest.questions[i].correct) {
+                    // Добавляем в ошибки только если пользователь дал неправильный ответ (неотвеченные не добавляем)
+                    errorQuestions.push(i);
+                }
+            }
+
+            let buttonsHTML = `
+                <button onclick="reviewTest()">Просмотреть ответы</button>
+                <button onclick="backToMainFromQuiz()" style="background: #95a5a6; margin-left: 10px;">На главную</button>
+            `;
+
+            if (errorQuestions.length > 0) {
+                buttonsHTML = `
+                    <button onclick="startErrorReview()" style="background: #e74c3c;">Работа над ошибками (${errorQuestions.length})</button>
+                    ` + buttonsHTML;
+            }
+
+            document.getElementById('quiz-section').innerHTML = `
+                <div class="result">
+                    <h2>Тест завершён!</h2>
+                    <p>Ваш результат: <strong>${score} из ${currentTest.questions.length}</strong></p>
+                    <p>${score === currentTest.questions.length ? 'Отлично! Все ответы правильные! 🎉' : 
+                         score >= currentTest.questions.length * 0.7 ? 'Хороший результат!' : 'Можно лучше 😉'}</p>
+                    <div style="margin-top: 20px;">
+                        ${buttonsHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // === НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ НАД ОШИБКАМИ ===
+        function startErrorReview() {
+            if (errorQuestions.length === 0) {
+                alert('Ошибок не было!');
+                return;
+            }
+            
+            currentErrorIndex = 0;
+            errorReviewAnswers = new Array(errorQuestions.length).fill(undefined);
+            isErrorReviewMode = true;
+            renderErrorQuestion();
+        }
+
+        function renderErrorQuestion() {
+            const qIndex = errorQuestions[currentErrorIndex];
+            const q = currentTest.questions[qIndex];
+            const totalErrors = errorQuestions.length;
+
+            let optionsHTML = '';
+            q.answers.forEach((ans, i) => {
+                const imgHTML = ans.image ? `<img src="${ans.image}" alt="Изображение">` : '';
+                const isChecked = errorReviewAnswers[currentErrorIndex] === i;
+                const isDisabled = errorReviewAnswers[currentErrorIndex] !== undefined;
+                
+                optionsHTML += `
+                    <label id="answer-label-${i}" class="answer-label">
+                        <input type="radio" name="answer" value="${i}" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} onchange="handleAnswerSelection(${q.correct}, ${i})">
+                        <strong>${ans.text}</strong>
+                        ${imgHTML}
+                    </label>`;
+            });
+
+            document.getElementById('quiz-section').innerHTML = `
+                <div class="error-review-title">Работа над ошибками</div>
+                <p><strong>Ошибка ${currentErrorIndex + 1} из ${totalErrors}</strong></p>
+                <div class="quiz-question">
+                    <h3>${q.text}</h3>
+                    <div class="quiz-options">${optionsHTML}</div>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="prevError()" ${currentErrorIndex === 0 ? 'disabled' : ''}>Назад</button>
+                    <button onclick="nextQuestion()" style="margin-left: 15px;">
+                        ${currentErrorIndex < totalErrors - 1 ? 'Далее' : 'Завершить'}
+                    </button>
+                    <button onclick="backToMainFromQuiz()" style="background: #95a5a6; margin-left: 15px;">На главную</button>
+                </div>
+            `;
+
+            // Если уже был выбран ответ, подсвечиваем его
+            if (errorReviewAnswers[currentErrorIndex] !== undefined) {
+                highlightAnswersInErrorReview(q.correct, errorReviewAnswers[currentErrorIndex]);
+            }
+        }
+
+        function prevError() {
+            if (currentErrorIndex > 0) {
+                currentErrorIndex--;
+                renderErrorQuestion();
+            }
+        }
+
+        function showErrorReviewResults() {
+            isErrorReviewMode = false;
+            let correctCount = 0;
+            
+            for (let i = 0; i < errorQuestions.length; i++) {
+                const qIndex = errorQuestions[i];
+                if (errorReviewAnswers[i] === currentTest.questions[qIndex].correct) {
+                    correctCount++;
+                }
+            }
+
+            document.getElementById('quiz-section').innerHTML = `
+                <div class="result">
+                    <h2>Работа над ошибками завершена!</h2>
+                    <p>Вы правильно ответили на <strong>${correctCount} из ${errorQuestions.length}</strong> вопросов с ошибками</p>
+                    <div style="margin-top: 20px;">
+                        <button onclick="backToMainFromQuiz()" style="background: #95a5a6;">На главную</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function reviewTest() {
+            showResultsMode = true;
+            currentQuestionIndex = 0;
+            isErrorReviewMode = false;
+            
+            document.getElementById('quiz-section').innerHTML = `
+                <div class="error-review-title">Просмотр результатов теста</div>
+                <p style="text-align: center;">Выберите вопрос для просмотра:</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0;">
+                    ${currentTest.questions.map((q, i) => {
+                        const isCorrect = userAnswers[i] !== undefined && userAnswers[i] === q.correct;
+                        const isWrong = userAnswers[i] !== undefined && userAnswers[i] !== q.correct;
+                        const isUnanswered = userAnswers[i] === undefined || userAnswers[i] === -1;
+                        
+                        let bgColor = '#3498db'; // обычный
+                        if (isCorrect) bgColor = '#27ae60'; // правильный
+                        if (isWrong) bgColor = '#e74c3c'; // неправильный
+                        if (isUnanswered) bgColor = '#95a5a6'; // неотвеченный
+                        
+                        return `<button onclick="reviewQuestion(${i})" style="background: ${bgColor}; width: 40px; height: 40px; border-radius: 50%;">${i+1}</button>`;
+                    }).join('')}
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="backToMainFromQuiz()" style="background: #95a5a6;">На главную</button>
+                </div>
+            `;
+        }
+
+        function reviewQuestion(index) {
+            showResultsMode = true;
+            currentQuestionIndex = index;
+            
+            const q = currentTest.questions[currentQuestionIndex];
+            const total = currentTest.questions.length;
+            const userAnswer = userAnswers[currentQuestionIndex];
+
+            let optionsHTML = '';
+            q.answers.forEach((ans, i) => {
+                const imgHTML = ans.image ? `<img src="${ans.image}" alt="Изображение">` : '';
+                const isCorrect = i === q.correct;
+                const isUser = userAnswer === i;
+                let labelClass = '';
+                
+                if (isCorrect) labelClass = 'correct-answer';
+                if (isUser && !isCorrect) labelClass = 'wrong-answer';
+                
+                optionsHTML += `
+                    <label class="${labelClass}">
+                        <strong>${ans.text}</strong>
+                        ${imgHTML}
+                        ${isCorrect ? '<em> — правильный ответ</em>' : ''}
+                        ${isUser && !isCorrect ? '<em> — ваш ответ</em>' : ''}
+                        ${userAnswer === -1 && isCorrect ? '<em> — вы не ответили</em>' : ''}
+                    </label>`;
+            });
+
+            document.getElementById('quiz-section').innerHTML = `
+                <div class="error-review-title">Просмотр вопроса ${index + 1}</div>
+                <div class="quiz-question">
+                    <h3>${q.text}</h3>
+                    <div class="quiz-options">${optionsHTML}</div>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="prevReviewQuestion()" ${currentQuestionIndex === 0 ? 'disabled' : ''}>Назад</button>
+                    <button onclick="nextReviewQuestion()" style="margin-left: 15px;" ${currentQuestionIndex >= total - 1 ? 'disabled' : ''}>Далее</button>
+                    <button onclick="reviewTest()" style="background: #95a5a6; margin-left: 15px;">К списку вопросов</button>
+                </div>
+            `;
+        }
+
+        function prevReviewQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                reviewQuestion(currentQuestionIndex);
+            }
+        }
+
+        function nextReviewQuestion() {
+            if (currentQuestionIndex < currentTest.questions.length - 1) {
+                currentQuestionIndex++;
+                reviewQuestion(currentQuestionIndex);
+            }
+        }
+
+        function backToMainFromQuiz() {
+            showResultsMode = false;
+            isErrorReviewMode = false;
+            errorQuestions = [];
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('quiz-section').innerHTML = '';
+            showMainPage();
+        }
+    </script>
+</body>
+</html>

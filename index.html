@@ -260,6 +260,36 @@
             cursor: not-allowed;
         }
         
+        /* Стили для тест-кабинета */
+        .test-cabinet-btn {
+            background: #9b59b6;
+            margin-bottom: 20px;
+        }
+        .test-cabinet-section {
+            display: none;
+            margin-top: 30px;
+        }
+        .test-cabinet-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-cabinet-card h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .test-cabinet-info {
+            margin: 10px 0;
+            color: #6c757d;
+        }
+        .test-cabinet-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
         /* Адаптивные стили для мобильных устройств */
         @media (max-width: 768px) {
             body {
@@ -303,7 +333,7 @@
                 font-size: 14px;
             }
             
-            .create-btn, .import-btn, .convert-btn, .logout-btn, .login-btn {
+            .create-btn, .import-btn, .convert-btn, .logout-btn, .login-btn, .test-cabinet-btn {
                 width: 100%;
                 margin-bottom: 10px;
             }
@@ -526,6 +556,7 @@
             <button class="import-btn" onclick="refreshTestsFromGitHub()">Обновить тесты с GitHub</button>
             <button class="import-btn" onclick="document.getElementById('import-file-input').click()" style="background: #95a5a6;">Импорт (для разработки)</button>
             <button class="convert-btn" onclick="document.getElementById('convert-file-input').click()">Конвертировать чужой JSON в мой формат</button>
+            <button class="test-cabinet-btn" onclick="showTestCabinet()">Тест кабинет</button>
             <button class="logout-btn" onclick="logout()">Выйти</button>
             <hr style="margin: 20px 0;">
         </div>
@@ -534,9 +565,24 @@
 
         <div id="test-list" class="test-list"></div>
 
+        <!-- Секция тест-кабинета -->
+        <div id="test-cabinet-section" class="test-cabinet-section">
+            <h2>Тест кабинет</h2>
+            <p>Здесь вы можете пройти тестирование по случайным 50 вопросам из базы знаний</p>
+            
+            <div id="test-cabinet-list"></div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="backToMainFromCabinet()" style="background: #95a5a6;">Назад к списку тестов</button>
+            </div>
+        </div>
+
         <!-- Скрытые input'ы для импорта и конвертации -->
         <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importTestsFromFile(event)">
         <input type="file" id="convert-file-input" accept=".json" style="display: none;" onchange="convertForeignJson(event)">
+        
+        <!-- Скрытый input для загрузки теста в тест-кабинет -->
+        <input type="file" id="cabinet-file-input" accept=".json" style="display: none;" onchange="loadTestForCabinet(event)">
 
         <!-- Модальное окно входа -->
         <div id="login-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100;">
@@ -595,6 +641,9 @@
         let currentErrorIndex = 0; // Текущий вопрос в режиме ошибок
         let errorReviewAnswers = []; // Ответы пользователя в режиме работы над ошибками
         let isErrorReviewMode = false; // Флаг режима работы над ошибками
+
+        // Переменные для тест-кабинета
+        let testCabinetTests = []; // Тесты загруженные в тест-кабинет
 
         function getTestsJsonUrl() {
             return 'tests.json';
@@ -983,6 +1032,7 @@
             document.getElementById('test-list').style.display = 'none';
             document.getElementById('no-tests-msg').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('test-cabinet-section').style.display = 'none';
 
             const container = document.getElementById('questions-container');
             container.innerHTML = '';
@@ -1012,6 +1062,7 @@
 
         function showMainPage() {
             document.getElementById('test-list').style.display = 'block';
+            document.getElementById('test-cabinet-section').style.display = 'none';
             if (isLoggedIn) {
                 document.getElementById('admin-panel').style.display = 'block';
             }
@@ -1219,6 +1270,7 @@
             document.getElementById('test-list').style.display = 'none';
             document.getElementById('no-tests-msg').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('test-cabinet-section').style.display = 'none';
             
             document.getElementById('test-title').value = test.title;
             
@@ -1285,6 +1337,7 @@
             document.getElementById('test-list').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'none';
             document.getElementById('create-form').style.display = 'none';
+            document.getElementById('test-cabinet-section').style.display = 'none';
 
             renderQuestion();
             document.getElementById('quiz-section').style.display = 'block';
@@ -1639,6 +1692,170 @@
             errorQuestions = [];
             document.getElementById('quiz-section').style.display = 'none';
             document.getElementById('quiz-section').innerHTML = '';
+            showMainPage();
+        }
+
+        // === ФУНКЦИИ ДЛЯ ТЕСТ-КАБИНЕТА ===
+        function showTestCabinet() {
+            document.getElementById('test-list').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('create-form').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('test-cabinet-section').style.display = 'block';
+            
+            loadTestCabinet();
+        }
+
+        function loadTestCabinet() {
+            const cabinetList = document.getElementById('test-cabinet-list');
+            cabinetList.innerHTML = '';
+            
+            if (testCabinetTests.length === 0) {
+                cabinetList.innerHTML = `
+                    <div class="test-cabinet-card">
+                        <h3>Тест кабинет пуст</h3>
+                        <p>Загрузите JSON файл с тестами, чтобы начать работу</p>
+                        <div class="test-cabinet-actions">
+                            <button onclick="document.getElementById('cabinet-file-input').click()" style="background: #3498db;">Загрузить тест из файла</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            testCabinetTests.forEach((test, index) => {
+                const card = document.createElement('div');
+                card.className = 'test-cabinet-card';
+                
+                card.innerHTML = `
+                    <h3>${test.title}</h3>
+                    <div class="test-cabinet-info">
+                        <p>Всего вопросов в базе: ${test.questions.length}</p>
+                        <p>Будет выбрано: ${Math.min(50, test.questions.length)} случайных вопросов</p>
+                    </div>
+                    <div class="test-cabinet-actions">
+                        <button onclick="startCabinetTest(${index})" style="background: #3498db;">Начать тест (50 случайных вопросов)</button>
+                        <button onclick="removeCabinetTest(${index})" style="background: #e74c3c;">Удалить из кабинета</button>
+                    </div>
+                `;
+                
+                cabinetList.appendChild(card);
+            });
+        }
+
+        function loadTestForCabinet(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            event.target.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let loadedTests = [];
+
+                    if (Array.isArray(data)) {
+                        // Если файл содержит массив тестов
+                        data.forEach(test => {
+                            if (test.title && Array.isArray(test.questions) && test.questions.length > 0) {
+                                loadedTests.push({
+                                    title: test.title,
+                                    questions: test.questions
+                                });
+                            }
+                        });
+                    } else if (data.title && Array.isArray(data.questions) && data.questions.length > 0) {
+                        // Если файл содержит один тест
+                        loadedTests.push({
+                            title: data.title,
+                            questions: data.questions
+                        });
+                    }
+
+                    if (loadedTests.length === 0) {
+                        alert('Не удалось загрузить тесты из файла. Проверьте формат JSON.');
+                        return;
+                    }
+
+                    testCabinetTests.push(...loadedTests);
+                    loadTestCabinet();
+                    
+                    alert(`Загружено ${loadedTests.length} тест(ов) в тест-кабинет!`);
+                } catch (err) {
+                    console.error(err);
+                    alert('Ошибка чтения или парсинга JSON файла.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function removeCabinetTest(index) {
+            if (index >= 0 && index < testCabinetTests.length) {
+                testCabinetTests.splice(index, 1);
+                loadTestCabinet();
+            }
+        }
+
+        function getRandomQuestions(questions, count) {
+            if (questions.length <= count) {
+                return [...questions]; // Возвращаем все вопросы, если их меньше или равно нужному количеству
+            }
+            
+            // Создаем копию массива вопросов
+            const questionsCopy = [...questions];
+            const selectedQuestions = [];
+            
+            // Выбираем случайные вопросы без повторений
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * questionsCopy.length);
+                selectedQuestions.push(questionsCopy[randomIndex]);
+                questionsCopy.splice(randomIndex, 1); // Удаляем выбранный вопрос, чтобы избежать повторений
+            }
+            
+            return selectedQuestions;
+        }
+
+        function startCabinetTest(index) {
+            if (index < 0 || index >= testCabinetTests.length) {
+                alert('Тест не найден!');
+                return;
+            }
+            
+            const originalTest = testCabinetTests[index];
+            
+            // Проверяем, достаточно ли вопросов в тесте
+            if (originalTest.questions.length < 10) {
+                alert('В тесте должно быть минимум 10 вопросов для проведения тестирования!');
+                return;
+            }
+            
+            // Выбираем 50 случайных вопросов (или все, если вопросов меньше)
+            const questionsCount = Math.min(50, originalTest.questions.length);
+            const randomQuestions = getRandomQuestions(originalTest.questions, questionsCount);
+            
+            // Создаем временный тест с выбранными вопросами
+            currentTest = {
+                title: `${originalTest.title} (${questionsCount} случайных вопросов)`,
+                questions: randomQuestions
+            };
+            
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            showResultsMode = false;
+            isErrorReviewMode = false;
+
+            document.getElementById('test-list').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('create-form').style.display = 'none';
+            document.getElementById('test-cabinet-section').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'block';
+
+            renderQuestion();
+        }
+
+        function backToMainFromCabinet() {
+            document.getElementById('test-cabinet-section').style.display = 'none';
             showMainPage();
         }
     </script>

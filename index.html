@@ -568,7 +568,7 @@
         <!-- Секция тест-кабинета -->
         <div id="test-cabinet-section" class="test-cabinet-section">
             <h2>Тест кабинет</h2>
-            <p>Здесь вы можете пройти тестирование по случайным 50 вопросам из базы знаний</p>
+            <p>Здесь вы можете пройти тестирование по случайным 50 вопросам из доступных тестов</p>
             
             <div id="test-cabinet-list"></div>
             
@@ -580,9 +580,6 @@
         <!-- Скрытые input'ы для импорта и конвертации -->
         <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importTestsFromFile(event)">
         <input type="file" id="convert-file-input" accept=".json" style="display: none;" onchange="convertForeignJson(event)">
-        
-        <!-- Скрытый input для загрузки теста в тест-кабинет -->
-        <input type="file" id="cabinet-file-input" accept=".json" style="display: none;" onchange="loadTestForCabinet(event)">
 
         <!-- Модальное окно входа -->
         <div id="login-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100;">
@@ -641,9 +638,6 @@
         let currentErrorIndex = 0; // Текущий вопрос в режиме ошибок
         let errorReviewAnswers = []; // Ответы пользователя в режиме работы над ошибками
         let isErrorReviewMode = false; // Флаг режима работы над ошибками
-
-        // Переменные для тест-кабинета
-        let testCabinetTests = []; // Тесты загруженные в тест-кабинет
 
         function getTestsJsonUrl() {
             return 'tests.json';
@@ -1710,91 +1704,50 @@
             const cabinetList = document.getElementById('test-cabinet-list');
             cabinetList.innerHTML = '';
             
-            if (testCabinetTests.length === 0) {
+            if (tests.length === 0) {
                 cabinetList.innerHTML = `
                     <div class="test-cabinet-card">
-                        <h3>Тест кабинет пуст</h3>
-                        <p>Загрузите JSON файл с тестами, чтобы начать работу</p>
-                        <div class="test-cabinet-actions">
-                            <button onclick="document.getElementById('cabinet-file-input').click()" style="background: #3498db;">Загрузить тест из файла</button>
-                        </div>
+                        <h3>Нет доступных тестов</h3>
+                        <p>В системе пока нет тестов. Создайте тесты или загрузите их через импорт.</p>
                     </div>
                 `;
                 return;
             }
             
-            testCabinetTests.forEach((test, index) => {
-                const card = document.createElement('div');
-                card.className = 'test-cabinet-card';
-                
-                card.innerHTML = `
-                    <h3>${test.title}</h3>
-                    <div class="test-cabinet-info">
-                        <p>Всего вопросов в базе: ${test.questions.length}</p>
-                        <p>Будет выбрано: ${Math.min(50, test.questions.length)} случайных вопросов</p>
-                    </div>
-                    <div class="test-cabinet-actions">
-                        <button onclick="startCabinetTest(${index})" style="background: #3498db;">Начать тест (50 случайных вопросов)</button>
-                        <button onclick="removeCabinetTest(${index})" style="background: #e74c3c;">Удалить из кабинета</button>
-                    </div>
-                `;
-                
-                cabinetList.appendChild(card);
-            });
-        }
-
-        function loadTestForCabinet(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            event.target.value = '';
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    let loadedTests = [];
-
-                    if (Array.isArray(data)) {
-                        // Если файл содержит массив тестов
-                        data.forEach(test => {
-                            if (test.title && Array.isArray(test.questions) && test.questions.length > 0) {
-                                loadedTests.push({
-                                    title: test.title,
-                                    questions: test.questions
-                                });
-                            }
-                        });
-                    } else if (data.title && Array.isArray(data.questions) && data.questions.length > 0) {
-                        // Если файл содержит один тест
-                        loadedTests.push({
-                            title: data.title,
-                            questions: data.questions
-                        });
-                    }
-
-                    if (loadedTests.length === 0) {
-                        alert('Не удалось загрузить тесты из файла. Проверьте формат JSON.');
-                        return;
-                    }
-
-                    testCabinetTests.push(...loadedTests);
-                    loadTestCabinet();
+            tests.forEach((test, index) => {
+                // Проверяем, достаточно ли вопросов в тесте для тест-кабинета
+                if (test.questions.length < 10) {
+                    // Если вопросов мало, показываем тест, но с предупреждением
+                    const card = document.createElement('div');
+                    card.className = 'test-cabinet-card';
                     
-                    alert(`Загружено ${loadedTests.length} тест(ов) в тест-кабинет!`);
-                } catch (err) {
-                    console.error(err);
-                    alert('Ошибка чтения или парсинга JSON файла.');
+                    card.innerHTML = `
+                        <h3>${test.title}</h3>
+                        <div class="test-cabinet-info">
+                            <p>Всего вопросов в базе: ${test.questions.length}</p>
+                            <p style="color: #e74c3c;">⚠️ В тесте недостаточно вопросов для тест-кабинета (нужно минимум 10)</p>
+                        </div>
+                    `;
+                    
+                    cabinetList.appendChild(card);
+                } else {
+                    const card = document.createElement('div');
+                    card.className = 'test-cabinet-card';
+                    
+                    card.innerHTML = `
+                        <h3>${test.title}</h3>
+                        <div class="test-cabinet-info">
+                            <p>Всего вопросов в базе: ${test.questions.length}</p>
+                            <p>Будет выбрано: ${Math.min(50, test.questions.length)} случайных вопросов</p>
+                        </div>
+                        <div class="test-cabinet-actions">
+                            <button onclick="startCabinetTest(${index})" style="background: #3498db;">Начать тест (${Math.min(50, test.questions.length)} случайных вопросов)</button>
+                        </div>
+                    `;
+                    
+                    cabinetList.appendChild(card);
                 }
-            };
-            reader.readAsText(file);
-        }
-
-        function removeCabinetTest(index) {
-            if (index >= 0 && index < testCabinetTests.length) {
-                testCabinetTests.splice(index, 1);
-                loadTestCabinet();
-            }
+            });
         }
 
         function getRandomQuestions(questions, count) {
@@ -1817,16 +1770,16 @@
         }
 
         function startCabinetTest(index) {
-            if (index < 0 || index >= testCabinetTests.length) {
+            if (index < 0 || index >= tests.length) {
                 alert('Тест не найден!');
                 return;
             }
             
-            const originalTest = testCabinetTests[index];
+            const originalTest = tests[index];
             
             // Проверяем, достаточно ли вопросов в тесте
             if (originalTest.questions.length < 10) {
-                alert('В тесте должно быть минимум 10 вопросов для проведения тестирования!');
+                alert('В тесте должно быть минимум 10 вопросов для проведения тестирования в тест-кабинете!');
                 return;
             }
             
